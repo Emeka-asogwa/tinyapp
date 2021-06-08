@@ -4,10 +4,30 @@ const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
+//To return a random string of length 10
+
+function generateRandomString() {
+  possibleCombination = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split('');
+  let string = "";
+  for(let i = 0; i < 6; i++) {
+    string += possibleCombination[Math.floor(Math.random()*possibleCombination.length)];
+  } 
+  return string;
+}
+console.log(generateRandomString());
+
+
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURl = "http://www.lighthouselabs.ca";
+  res.redirect(longURL);
+});
+
 app.post("/urls", (req,res) => {
   console.log(req.body);
   res.send("Ok");
