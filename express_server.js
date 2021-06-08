@@ -5,7 +5,6 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 //To return a random string of length 10
-
 function generateRandomString() {
   possibleCombination = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split('');
   let string = "";
@@ -14,7 +13,7 @@ function generateRandomString() {
   } 
   return string;
 }
-console.log(generateRandomString());
+//console.log(generateRandomString());
 
 
 
@@ -24,13 +23,26 @@ const urlDatabase = {
 };
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURl = "http://www.lighthouselabs.ca";
+  console.log("The is the URL",req.params);
+  const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+app.post("/urls/:shortURL/delete", (req, res) => {
+  if(urlDatabase[req.params.shortURL]) {
+    delete urlDatabase[req.params.shortURL]
+    res.redirect('/urls')
+  } else {
+    res.send('URL does not exist. ERROR!!!!')
+  }
+  // console.log(req.)
+  // res.redirect("/urls")
+})
 
 app.post("/urls", (req,res) => {
+  const shortRandomURL = generateRandomString()
+  urlDatabase[shortRandomURL] = req.body.longURL
   console.log(req.body);
-  res.send("Ok");
+  res.redirect(`/urls/${shortRandomURL}`);
 });
 
 app.use(bodyParser.urlencoded({extended: true}));
