@@ -21,7 +21,8 @@ function generateRandomString() {
   }
   return string;
 }
-//console.log(generateRandomString());
+
+
 
 const users = {
   "userRandomID": {
@@ -37,7 +38,17 @@ const users = {
 
 }
 
-//const key =users[]
+
+const getUserByEmail = function(userEmail) {
+  for (let id in users) {
+    if (users[id].email === email) {
+      return users[id];
+    }
+
+  }
+  return null;
+}
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -66,8 +77,13 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const user_id = generateRandomString()
   users[user_id] = { id: user_id, email: username, password: password };
-  res.cookie("user_id", user_id);
+  
 
+
+
+
+
+  res.cookie("user_id", user_id);
   res.redirect("/urls");
 })
 
