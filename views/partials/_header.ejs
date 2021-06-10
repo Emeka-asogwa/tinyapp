@@ -11,7 +11,7 @@
       </div>
     </div>
     <div> 
-      <% if (username) {%>
+      <% if (user) {%>
          <form method="POST" action="/logout">
           <span style="width: 2000px;"> Logged in As: <%= user.email %>!</span>
           <button type="sumbit" class="btn btn-outline-second">Logout   </button>
@@ -22,8 +22,8 @@
 
           method="POST" action="/login"> -->
           <a class="navbar-brand" href="/login">Login</a>
-          <a class="navbar-band" href="/register"></a>
-          <input name="username" type="text"></input>
+          <a class="navbar-band" href="/register">Register</a>
+          
           <!-- <button type="sumbit" class="btn btn-outline-second">Login   </button>
         </form> -->
 
