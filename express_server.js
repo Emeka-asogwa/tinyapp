@@ -36,12 +36,12 @@ const users = {
     password: "dishwasher-funk"
   }
 
-}
+};
 
 
 
 
-const getUserByEmail = function (userEmail,email) {
+const getUserByEmail = function(userEmail,email) {
   for (let id in userEmail) {
     if (userEmail[id].email === email) {
       return userEmail[id];
@@ -49,7 +49,7 @@ const getUserByEmail = function (userEmail,email) {
 
   }
   return null;
-}
+};
 
 
 const urlDatabase = {
@@ -107,7 +107,7 @@ app.post("/register", (req, res) => {
 
   res.cookie("user_id", user_id);
   res.redirect("/urls");
-})
+});
 
 //console.log(users);
 
@@ -122,10 +122,10 @@ app.post("/register", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (urlDatabase[req.params.shortURL]) {
-    delete urlDatabase[req.params.shortURL]
-    res.redirect('/urls')
+    delete urlDatabase[req.params.shortURL];
+    res.redirect('/urls');
   } else {
-    res.send('URL does not exist. ERROR!!!!')
+    res.send('URL does not exist. ERROR!!!!');
   }
 
 });
@@ -150,8 +150,7 @@ app.post("/login", (req, res) => {
       .status(403)
       .send("Invalid email or password");
     return;
-  }
-  else if (!user || user.password !== password) {
+  } else if (!user || user.password !== password) {
     res
       .status(403)
       .send("Wrong login details!");
@@ -164,19 +163,19 @@ app.post("/login", (req, res) => {
 
 
 
-})
+});
 
 app.post("/logout", (req, res) => {
 
 
-  res.clearCookie("user_id")
+  res.clearCookie("user_id");
   res.redirect("/urls");
-})
+});
 
 
 app.post("/urls", (req, res) => {
-  const shortRandomURL = generateRandomString()
-  urlDatabase[shortRandomURL] = req.body.longURL
+  const shortRandomURL = generateRandomString();
+  urlDatabase[shortRandomURL] = req.body.longURL;
   //console.log(req.body);
   res.redirect(`/urls/${shortRandomURL}`);
 });
@@ -186,7 +185,7 @@ app.post("/urls/:id", (req, res) => {
   //console.log("This is the short url", req.params.id)
 
   urlDatabase[req.params.id].longURL = req.body.longURL;
-  res.redirect('/urls/')
+  res.redirect('/urls/');
 
 });
 
@@ -228,7 +227,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n")
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 app.get("/set", (req, res) => {
   const a = 1;
