@@ -39,6 +39,8 @@ const users = {
 }
 
 
+
+
 const getUserByEmail = function (userEmail) {
   for (let id in users) {
     if (users[id].email === userEmail) {
@@ -76,10 +78,7 @@ app.post("/register", (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
   const user_id = generateRandomString();
-
-
-
-  console.log("this is req.body", req.body);
+  //console.log("this is req.body", req.body);
 
   const emailExist = getUserByEmail(req.body.email);
   //const {email,passwd} = req.body;
@@ -92,6 +91,7 @@ app.post("/register", (req, res) => {
     res
       .status(400)
       .send("Email already exists");
+      return;
 
   }
   if (!emailExist) {
@@ -100,13 +100,24 @@ app.post("/register", (req, res) => {
       username,
       password,
     };
+
   }
 
 
 
-  res.cookie("user_id", user_id);
+  //res.cookie("user_id", user_id);
   res.redirect("/urls");
 })
+
+console.log(users);
+
+
+// app.post("/login", (req,res) => {
+//   res.cookie("password", password);
+//   res.cookie("username", username);
+
+//   res.redirect("/urls");
+// })
 
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -118,18 +129,38 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
   // console.log(req.)
   // res.redirect("/urls")
+
+   app.get("/login", (req,res) =>{
+    const templateVars = {
+      urls: urlDatabase,
+      user : users[req.cookies["user_id"]]
+    };
+    res.render("url_login", templateVars);
+     
+    });
+    
 })
 app.post("/login", (req, res) => {
+  const {email, password} = req.body;
+      const user = getUserByEmail(email);
+      if (!user || user.password !== password){
+        res
+        .status(403)
+        .send("Wrong login details!");
+        return;
+      }
+    
+      res.cookie("user_id", user.id);
+      res.redirect("/urls");
 
 
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
-
+  
 })
+
 app.post("/logout", (req, res) => {
 
 
-  res.clearCookie("username")
+  res.clearCookie("user_id")
   res.redirect("/urls");
 })
 
