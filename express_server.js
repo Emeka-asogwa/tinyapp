@@ -39,9 +39,9 @@ const users = {
 }
 
 
-const getUserByEmail = function(userEmail) {
+const getUserByEmail = function (userEmail) {
   for (let id in users) {
-    if (users[id].email === email) {
+    if (users[id].email === userEmail) {
       return users[id];
     }
 
@@ -75,11 +75,32 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
-  const user_id = generateRandomString()
-  users[user_id] = { id: user_id, email: username, password: password };
-  
+  const user_id = generateRandomString();
 
 
+
+  console.log("this is req.body", req.body);
+
+  const emailExist = getUserByEmail(req.body.email);
+  //const {email,passwd} = req.body;
+  if (!username || !password) {
+    res.status(400);
+    res.send("Wrong password or email, try again");
+    return;
+  }
+  if (emailExist) {
+    res
+      .status(400)
+      .send("Email already exists");
+
+  }
+  if (!emailExist) {
+    users[user_id] = {
+      id: user_id,
+      username,
+      password,
+    };
+  }
 
 
 
