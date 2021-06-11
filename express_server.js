@@ -22,6 +22,17 @@ function generateRandomString() {
   return string;
 }
 
+const urlsForUser = function(id) {
+  const userDatabase = {};
+  for (let key in urlDatabase){
+    if (userDatabase[key].userID === id){
+    userDatabase[key] = urlDatabase[key];
+  }
+}
+return userDatabase;
+};
+
+
 
 
 const users = {
