@@ -1,18 +1,21 @@
+const cookieSession = require("cookie-session");
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieSession = require("cookie-session");
 
 
-const cookieParser = require("cookie-parser");
+//const cookieParser = require("cookie-parser");
 const bcrypt = require('bcrypt');
 
 
 
 const app = express();
-app.use(cookieParser());
+//app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-//app.use(cookieSession());
+app.use(cookieSession({
+  name:"session",
+  keys: ["key1","key2"]
+}));
 
 
 
@@ -85,7 +88,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/register", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies["user_id"]]
+    user: users[req.session.user_id]
   };
 
 
@@ -120,10 +123,9 @@ app.post("/register", (req, res) => {
     };
 
   }
-  
 
-
-  res.cookie("user_id", user_id);
+  //res.cookie("user_id", user_id);
+  req.session.user_id = user_id;
   res.redirect("/urls");
 });
 
@@ -153,7 +155,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/login", (req, res) => {
   const templateVars = {
 
-    user : req.cookies["user_id"]
+    user : req.session.user_id
   };
   res.render("url_login", templateVars);
   //res.send('ok');
@@ -176,7 +178,8 @@ app.post("/login", (req, res) => {
 
   }
   //password.length === 0 || email.length === 0    "Invalid email or password"
-  res.cookie("user_id", user.id);
+  //res.cookie("user_id", user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 
 
@@ -186,7 +189,7 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
 
 
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
@@ -211,22 +214,22 @@ app.post("/urls/:id", (req, res) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/urls/new", (req, res) => {
-  const id = req.cookies["user_id"];
+  const id = req.session.user_id;
   if (!users[id]) {
     res.redirect("/login");
     return;
   }
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.session.user_id] };
 
   res.render("urls_new", templateVars
   );
 });
 
 app.get("/urls", (req, res) => {
-  const id = req.cookies["user_id"];
+  const id = req.session["user_id"];
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
   };
   res.render("urls_index", templateVars);
 });
@@ -234,7 +237,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   res.render("urls_show", templateVars);
 });
