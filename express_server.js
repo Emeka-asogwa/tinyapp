@@ -1,6 +1,7 @@
 const cookieSession = require("cookie-session");
 const express = require("express");
 const bodyParser = require("body-parser");
+const { getUserByEmail } = require("./helpers");
 
 
 //const cookieParser = require("cookie-parser");
@@ -61,18 +62,6 @@ const users = {
 
 
 
-
-const getUserByEmail = function(userEmail,email) {
-  for (let id in userEmail) {
-    if (userEmail[id].email === email) {
-      return userEmail[id];
-    }
-
-  }
-  return null;
-};
-
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -101,7 +90,7 @@ app.post("/register", (req, res) => {
   const user_id = generateRandomString();
   //console.log("this is req.body", req.body);
 
-  const emailExist = getUserByEmail(users, email);
+  const emailExist = getUserByEmail(email, users);
   //const {email,passwd} = req.body;
   if (!email || !password) {
     res.status(400);
@@ -164,7 +153,7 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const user = getUserByEmail(users,email);
+  const user = getUserByEmail(email,users);
   if (password.length === 0 || email.length === 0) {
     res
       .status(403)

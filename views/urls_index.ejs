@@ -27,6 +27,7 @@
           <tr>
             <td><%=url %></td>
             <td><%=urls[url] %></td>
+            <% if (user) {%>
             <td>
               <a class="btn btn-outline-primary" href="/urls/<%= url %>"> Edit </a>
             </td>
@@ -35,6 +36,7 @@
               <button class="btn btn-outline-danger">Delete</button>
               </form>
             </td>
+            <%} %>
           </tr>
           <%} %>
           
