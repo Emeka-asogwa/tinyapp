@@ -1,12 +1,19 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieSession = require("cookie-session");
+
 
 const cookieParser = require("cookie-parser");
+const bcrypt = require('bcrypt');
+
+
 
 const app = express();
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+//app.use(cookieSession());
+
 
 
 const PORT = 8080; // default port 8080
@@ -78,7 +85,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/register", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies.user_id]
+    user: users[req.cookies["user_id"]]
   };
 
 
@@ -109,11 +116,11 @@ app.post("/register", (req, res) => {
     users[user_id] = {
       id: user_id,
       email,
-      password,
+      password: bcrypt.hashSync(password, 10),
     };
 
   }
-
+  
 
 
   res.cookie("user_id", user_id);
@@ -124,8 +131,8 @@ app.post("/register", (req, res) => {
 
 
 // app.post("/login", (req,res) => {
-//   res.cookie("password", password);
-//   res.cookie("username", username);
+//   res.cookies("password", password);
+//   res.cookies("username", username);
 
 //   res.redirect("/urls");
 // })
@@ -161,7 +168,7 @@ app.post("/login", (req, res) => {
       .status(403)
       .send("Invalid email or password");
     return;
-  } else if (!user || user.password !== password) {
+  } else if (!user || !bcrypt.compareSync(password, user.password )) {
     res
       .status(403)
       .send("Wrong login details!");
@@ -204,25 +211,26 @@ app.post("/urls/:id", (req, res) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/urls/new", (req, res) => {
-  const id = req.cookies.user_id;
-  if (!id) {
+  const id = req.cookies["user_id"];
+  if (!users[id]) {
     res.redirect("/login");
     return;
   }
-  const templateVars = { user: users[id] };
+  const templateVars = { user: users[req.cookies["user_id"]] };
 
   res.render("urls_new", templateVars
   );
 });
 
 app.get("/urls", (req, res) => {
-  const id = req.cookies.user_id;
+  const id = req.cookies["user_id"];
   const templateVars = {
     urls: urlDatabase,
-    user: users[id]
+    user: users[req.cookies["user_id"]],
   };
   res.render("urls_index", templateVars);
 });
+
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
@@ -237,6 +245,11 @@ app.get("/", (req, res) => {
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+app.get("/users.json", (req, res) => {
+  res.json(users);
+});
+
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
