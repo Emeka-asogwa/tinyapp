@@ -157,7 +157,7 @@ app.post("/login", (req, res) => {
   }
 
   req.session.user_id = user.id;
-  res.redirect("/urls");
+  res.redirect("/register");
 });
 
 // logs out the user and clears the cookie info
@@ -174,12 +174,12 @@ app.post("/urls", (req, res) => {
     shortURL: shortRandomURL,
     userID: req.session.user_id
   };
-  //console.log(req.body);
+  //console.log('This is req.body',req.body);
   res.redirect(`/urls/${shortRandomURL}`);
 });
 
 app.post("/urls/:id", (req, res) => {
-  //console.log('The is the output of the longURL', req.body.longURL);
+  //console.log('The is the output of the longURL', req);
   //console.log("This is the short url", req.params.id);
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect('/urls/');
@@ -220,7 +220,13 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // GET to the path/ page
 app.get("/", (req, res) => {
-  res.send("Hello!");
+
+  const id = req.session.user_id;
+  if (!users[id]) {
+    res.redirect("/login");
+    return;
+  }    
+  
 });
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
