@@ -235,7 +235,6 @@ app.get("/users.json", (req, res) => {
   res.json(users);
 });
 
-
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
