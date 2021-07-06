@@ -2,7 +2,7 @@ const cookieSession = require("cookie-session");
 const express = require("express");
 const methodOverride = require('method-override');
 const bodyParser = require("body-parser");
-const { getUserByEmail } = require("./helpers");
+const { getUserByEmail, getDate } = require("./helpers");
 
 const bcrypt = require('bcrypt');
 const app = express();
@@ -58,7 +58,10 @@ const urlDatabase = {
   "b2xVn2": {
     shortURL: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
-    userID: "randomString"
+    userID: "randomString",
+    date:"",
+    visitCount:0,
+    uniqueVisitCount:0
   }
 };
 
@@ -68,9 +71,12 @@ app.get("/u/:shortURL", (req, res) => {
   if (!longURL) {
     return res.status(404).send("Not found!");
   }
-  else {
-    res.redirect(longURL);
+  if (!req.session.user_id) {
+    req.session.visitID = generateRandomString();
+    urlDatabase[req.params.shortURL].uniqueVisitCount += 1;
   }
+  urlDatabase[req.params.shortURL].visitCount++;
+    res.redirect(longURL);
 });
 
 //Registration request
@@ -157,17 +163,25 @@ app.post("/logout", (req, res) => {
 // Create new short URL for corresponding long URL
 app.post("/urls", (req, res) => {
   const shortRandomURL = generateRandomString();
+  let date = getDate();
   urlDatabase[shortRandomURL] = {
     longURL: req.body.longURL,
     shortURL: shortRandomURL,
-    userID: req.session.user_id
+    userID: req.session.user_id,
+    date,
+    visitCount: "",
+    uniqueVisitCount: ""
   };
   res.redirect(`/urls/${shortRandomURL}`);
 });
 
-//Get request 
-app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id].longURL = req.body.longURL;
+//############################## 
+//  ---------- UPDATE - Edit url ---------
+// #############################
+app.put("/urls/:shortURL", (req, res) => {
+  if (req.session.user_id === urlDatabase[req.params.shortURL].userID){
+    urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+  }
   res.redirect('/urls/');
 });
 
@@ -197,7 +211,10 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
-    user: users[req.session.user_id]
+    user: users[req.session.user_id],
+    date:urlDatabase[req.params.shortURL].date,
+    visitCount:urlDatabase[req.params.shortURL].visitCount,
+    uniqueVisitCount: urlDatabase[req.params.shortURL].uniqueVisitCount
   };
   if (req.session["user_id"] && users[req.session.user_id].id === urlDatabase[req.params.shortURL].userID) {
     res.render("urls_show", templateVars);
