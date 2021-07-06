@@ -1,11 +1,13 @@
 const cookieSession = require("cookie-session");
 const express = require("express");
+const methodOverride = require('method-override');
 const bodyParser = require("body-parser");
 const { getUserByEmail } = require("./helpers");
 
 const bcrypt = require('bcrypt');
 const app = express();
 //app.use(cookieParser());
+app.use(methodOverride('_method'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
@@ -13,12 +15,11 @@ app.use(cookieSession({
   keys: ["key1", "key2"]
 }));
 
-app.use(bodyParser.urlencoded({ extended: true }));
-
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
+
 //To return a random string of length 10
-const generateRandomString = function() {
+const generateRandomString = function () {
   const possibleCombination = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split('');
   let string = "";
   for (let i = 0; i < 6; i++) {
@@ -28,7 +29,7 @@ const generateRandomString = function() {
 };
 
 // Selecting urls by the user id
-const urlsForUser = function(id) {
+const urlsForUser = function (id) {
   const userDatabase = {};
   for (let key in urlDatabase) {
     if (urlDatabase[key].userID === id) {
@@ -50,9 +51,7 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk"
   }
-
 };
-
 
 // A database to store users url (both short and long urls)
 const urlDatabase = {
@@ -65,9 +64,13 @@ const urlDatabase = {
 
 //Takes care of the GET request to path/u/:shortURL
 app.get("/u/:shortURL", (req, res) => {
-  //console.log("The is the URL", req.params);
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  if (!longURL) {
+    return res.status(404).send("Not found!");
+  }
+  else {
+    res.redirect(longURL);
+  }
 });
 
 
@@ -80,19 +83,14 @@ app.get("/register", (req, res) => {
   res.render("Urls_register", templateVars);
 });
 
-
 //Checks for valid registration details and maps it to the database to check if the user already created an account before
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const user_id = generateRandomString();
-  //console.log("this is req.body", req.body);
-
   const emailExist = getUserByEmail(email, users);
-  //const {email,passwd} = req.body;
   if (!email || !password) {
-    res.status(400);
-    res.send("Wrong password or email, try again");
+    res.status(400).send("Wrong password or email, try again");
     return;
   }
   if (emailExist) {
@@ -100,7 +98,6 @@ app.post("/register", (req, res) => {
       .status(400)
       .send("Email already exists");
     return;
-
   }
   if (!emailExist) {
     users[user_id] = {
@@ -108,32 +105,25 @@ app.post("/register", (req, res) => {
       email,
       password: bcrypt.hashSync(password, 10),
     };
-
   }
-
   //res.cookie("user_id", user_id);
   req.session.user_id = user_id;
   res.redirect("/urls");
 });
 
-
 //Takes care of the delete request from the user
 app.post("/urls/:shortURL/delete", (req, res) => {
-
   if (urlDatabase[req.params.shortURL] && urlDatabase[req.params.shortURL].userID === req.session.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect('/urls');
   } else {
     res.send('URL does not exist. ERROR!!!!');
   }
-
 });
-
 
 // login request
 app.get("/login", (req, res) => {
   const templateVars = {
-
     user: req.session.user_id
   };
   res.render("url_login", templateVars);
@@ -153,11 +143,9 @@ app.post("/login", (req, res) => {
       .status(403)
       .send("Wrong login details!");
     return;
-
   }
-
   req.session.user_id = user.id;
-  res.redirect("/register");
+  res.redirect("/urls");
 });
 
 // logs out the user and clears the cookie info
@@ -166,7 +154,7 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-
+// Create new short URL for corresponding long URL
 app.post("/urls", (req, res) => {
   const shortRandomURL = generateRandomString();
   urlDatabase[shortRandomURL] = {
@@ -174,18 +162,14 @@ app.post("/urls", (req, res) => {
     shortURL: shortRandomURL,
     userID: req.session.user_id
   };
-  //console.log('This is req.body',req.body);
   res.redirect(`/urls/${shortRandomURL}`);
 });
 
+//Get request 
 app.post("/urls/:id", (req, res) => {
-  //console.log('The is the output of the longURL', req);
-  //console.log("This is the short url", req.params.id);
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect('/urls/');
-
 });
-
 
 //Takes care of the new request from the user
 app.get("/urls/new", (req, res) => {
@@ -195,11 +179,11 @@ app.get("/urls/new", (req, res) => {
     return;
   }
   const templateVars = { user: users[req.session.user_id] };
-
   res.render("urls_new", templateVars
   );
 });
 
+//route for list of URL page
 app.get("/urls", (req, res) => {
   const id = req.session.user_id;
   const templateVars = {
@@ -215,26 +199,38 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
     user: users[req.session.user_id]
   };
-  res.render("urls_show", templateVars);
+  if (req.session["user_id"] && users[req.session.user_id].id === urlDatabase[req.params.shortURL].userID) {
+    res.render("urls_show", templateVars);
+  }
+  else {
+    return res.status(403).send("Login is required or Not your URL");
+    //res.redirect("/urls");
+  }
 });
 
 // GET to the path/ page
 app.get("/", (req, res) => {
-
+  console.log(req.session.user_id);
   const id = req.session.user_id;
   if (!users[id]) {
     res.redirect("/login");
     return;
-  }    
-  
+  }
+  res.redirect('/urls');
+
 });
+
+// Get request for the url database
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
+// Get request for users
 app.get("/users.json", (req, res) => {
   res.json(users);
 });
 
+// Get request with hello and other request examples
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
