@@ -1,12 +1,9 @@
 const cookieSession = require("cookie-session");
 const express = require("express");
 const methodOverride = require('method-override');
-const bodyParser = require("body-parser");
-const { getUserByEmail, getDate } = require("./helpers");
-
+const { getUserByEmail, getDate, generateRandomString } = require("./helpers");
 const bcrypt = require('bcrypt');
 const app = express();
-//app.use(cookieParser());
 app.use(methodOverride('_method'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -14,30 +11,8 @@ app.use(cookieSession({
   name: "session",
   keys: ["key1", "key2"]
 }));
-
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
-
-//To return a random string of length 10
-const generateRandomString = function () {
-  const possibleCombination = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split('');
-  let string = "";
-  for (let i = 0; i < 6; i++) {
-    string += possibleCombination[Math.floor(Math.random() * possibleCombination.length)];
-  }
-  return string;
-};
-
-// Selecting urls by the user id
-const urlsForUser = function (id) {
-  const userDatabase = {};
-  for (let key in urlDatabase) {
-    if (urlDatabase[key].userID === id) {
-      userDatabase[key] = urlDatabase[key];
-    }
-  }
-  return userDatabase;
-};
 
 // An object to keep users information. New users are added here to.
 const users = {
@@ -59,24 +34,37 @@ const urlDatabase = {
     shortURL: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
     userID: "randomString",
-    date:"",
-    visitCount:0,
-    uniqueVisitCount:0
+    date: "",
+    visitCount: 0,
+    uniqueVisitCount: 0
   }
+};
+
+const urlsForUser = function (id) {
+  const userDatabase = {};
+  for (let key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      userDatabase[key] = urlDatabase[key];
+    }
+  }
+  return userDatabase;
 };
 
 //Takes care of the GET request to path/u/:shortURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  if (!longURL) {
+  const shortURL = urlDatabase[req.params.shortURL];
+  if (!shortURL) {
     return res.status(404).send("Not found!");
   }
-  if (!req.session.user_id) {
-    req.session.visitID = generateRandomString();
-    urlDatabase[req.params.shortURL].uniqueVisitCount += 1;
-  }
-  urlDatabase[req.params.shortURL].visitCount++;
+  else {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    if (!req.session.user_id) {
+      req.session.visitID = generateRandomString();
+      urlDatabase[req.params.shortURL].uniqueVisitCount += 1;
+    }
+    urlDatabase[req.params.shortURL].visitCount++;
     res.redirect(longURL);
+  }
 });
 
 //Registration request
@@ -118,7 +106,6 @@ app.post("/register", (req, res) => {
 
 //Takes care of the delete request from the user
 app.delete("/urls/:shortURL", (req, res) => {
-  //console.log(req.params.shortURL);
   if (urlDatabase[req.params.shortURL] && urlDatabase[req.params.shortURL].userID === req.session.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect('/urls');
@@ -127,7 +114,7 @@ app.delete("/urls/:shortURL", (req, res) => {
   }
 });
 
-// login request
+// login request, handles client's login
 app.get("/login", (req, res) => {
   const templateVars = {
     user: req.session.user_id
@@ -175,11 +162,11 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortRandomURL}`);
 });
 
-//############################## 
+//##############################
 //  ---------- UPDATE - Edit url ---------
 // #############################
 app.put("/urls/:shortURL", (req, res) => {
-  if (req.session.user_id === urlDatabase[req.params.shortURL].userID){
+  if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
   }
   res.redirect('/urls/');
@@ -209,19 +196,20 @@ app.get("/urls", (req, res) => {
 
 //Takes care of the update request
 app.get("/urls/:shortURL", (req, res) => {
+  const shortURl = urlDatabase[req.params.shortURL];
+  if (!shortURl) {
+    return res.status(403).send("Login is required or Not your URL");
+  }
+
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
     user: users[req.session.user_id],
-    date:urlDatabase[req.params.shortURL].date,
-    visitCount:urlDatabase[req.params.shortURL].visitCount,
+    date: urlDatabase[req.params.shortURL].date,
+    visitCount: urlDatabase[req.params.shortURL].visitCount,
     uniqueVisitCount: urlDatabase[req.params.shortURL].uniqueVisitCount
   };
   if (req.session["user_id"] && users[req.session.user_id].id === urlDatabase[req.params.shortURL].userID) {
     res.render("urls_show", templateVars);
-  }
-  else {
-    return res.status(403).send("Login is required or Not your URL");
-    //res.redirect("/urls");
   }
 });
 
@@ -233,7 +221,6 @@ app.get("/", (req, res) => {
     return;
   }
   res.redirect('/urls');
-
 });
 
 // Get request for the url database

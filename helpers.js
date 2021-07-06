@@ -17,4 +17,17 @@ const getDate = function(){
   return date;
 };
 
-module.exports = { getUserByEmail, getDate };
+//To return a random string of length 10
+const generateRandomString = function() {
+  const possibleCombination = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split('');
+  let string = "";
+  for (let i = 0; i < 6; i++) {
+    string += possibleCombination[Math.floor(Math.random() * possibleCombination.length)];
+  }
+  return string;
+};
+
+// Selecting urls by the user id
+
+
+module.exports = { getUserByEmail, getDate, generateRandomString };
