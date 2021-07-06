@@ -73,7 +73,6 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-
 //Registration request
 app.get("/register", (req, res) => {
   const templateVars = {
@@ -112,7 +111,8 @@ app.post("/register", (req, res) => {
 });
 
 //Takes care of the delete request from the user
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
+  //console.log(req.params.shortURL);
   if (urlDatabase[req.params.shortURL] && urlDatabase[req.params.shortURL].userID === req.session.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect('/urls');
@@ -210,7 +210,6 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // GET to the path/ page
 app.get("/", (req, res) => {
-  console.log(req.session.user_id);
   const id = req.session.user_id;
   if (!users[id]) {
     res.redirect("/login");
