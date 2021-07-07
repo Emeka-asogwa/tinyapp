@@ -99,7 +99,6 @@ app.post("/register", (req, res) => {
       password: bcrypt.hashSync(password, 10),
     };
   }
-  //res.cookie("user_id", user_id);
   req.session.user_id = user_id;
   res.redirect("/urls");
 });
